@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 public class VolatileDemo2 {
 
-    public int num = 0;
+    public volatile int num = 0;
 
     public volatile static int count = 0;
 
@@ -13,10 +13,15 @@ public class VolatileDemo2 {
         count = 60;
     }
 
-    public static void main(String[] args) {
-        test02();
+    public void incrNum() {
+        num++;
     }
 
+    public static void main(String[] args) {
+        test03();
+    }
+
+    //todo 1.可见性
     public static void test01() {
         VolatileDemo2 demo2 = new VolatileDemo2();
         new Thread(() -> {
@@ -34,6 +39,7 @@ public class VolatileDemo2 {
         System.out.println(Thread.currentThread().getName() + "\t finish");
     }
 
+    //todo 1.可见性
     public static void test02() {
         new Thread(() -> {
             System.out.println(Thread.currentThread().getName() + "\t come in");
@@ -49,5 +55,24 @@ public class VolatileDemo2 {
         }
         System.out.println(Thread.currentThread().getName() + "\t finish");
     }
+
+    //todo 2.不保证原子性
+    public static void test03() {
+        VolatileDemo2 demo2 = new VolatileDemo2();
+        for (int i = 0; i < 20; i++) {
+            new Thread(() -> {
+                for (int j = 0; j < 1000; j++) {
+                    demo2.incrNum();
+                }
+            }, String.valueOf(i)).start();
+        }
+        //活跃线程数大于2，主线程和gc线程占两个
+        while (Thread.activeCount() > 2) {
+            //放弃cpu执行权，礼让其他线程
+            Thread.yield();
+        }
+        System.out.println(demo2.num);
+    }
+
 
 }
