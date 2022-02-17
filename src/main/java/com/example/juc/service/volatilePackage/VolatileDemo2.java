@@ -1,12 +1,15 @@
 package com.example.juc.service.volatilePackage;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class VolatileDemo2 {
 
     public volatile int num = 0;
 
     public volatile static int count = 0;
+
+    public AtomicInteger atomicInteger = new AtomicInteger();
 
     public void addNum60() {
         num = 60;
@@ -17,8 +20,12 @@ public class VolatileDemo2 {
         num++;
     }
 
+    public void getAndIncr() {
+        atomicInteger.getAndIncrement();
+    }
+
     public static void main(String[] args) {
-        test03();
+        test04();
     }
 
     //todo 1.可见性
@@ -74,5 +81,22 @@ public class VolatileDemo2 {
         System.out.println(demo2.num);
     }
 
+    //todo 2.原子类保证原子性
+    public static void test04() {
+        VolatileDemo2 demo2 = new VolatileDemo2();
+        for (int i = 0; i < 20; i++) {
+            new Thread(() -> {
+                for (int j = 0; j < 1000; j++) {
+                    demo2.getAndIncr();
+                }
+            }, String.valueOf(i)).start();
+        }
+        //活跃线程数大于2，主线程和gc线程占两个
+        while (Thread.activeCount() > 2) {
+            //放弃cpu执行权，礼让其他线程
+            Thread.yield();
+        }
+        System.out.println(demo2.atomicInteger.get());
+    }
 
 }
